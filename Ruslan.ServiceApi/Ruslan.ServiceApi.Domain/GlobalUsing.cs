@@ -1,0 +1,1 @@
+﻿global using Ruslan.ServiceApi.Domain.Base;

@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Authentication
+@using System.Net.Http.Headers
+@using OpenIddict.Server.AspNetCore
+
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
+
+<pre>@Data</pre>
+<button class="btn btn-primary" onclick="@GetDataAsync">Get data from microservice</button>
+
+@code {
+    public string? Data { get; set; }
+
+    private async Task GetDataAsync()
+    {
+            var token = await HttpContextAccessor.HttpContext!.GetTokenAsync(OpenIddictServerAspNetCoreConstants.Tokens.AccessToken);
+
+            if (token is null)
+            {
+                Data = "Token is null";
+                return;
+            }
+
+            using var client = HttpClientFactory.CreateClient();
+            using var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:20001/api/event-items/paged/0?pageSize=10");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            using var response = await client.SendAsync(request, HttpContextAccessor.HttpContext!.RequestAborted);
+            response.EnsureSuccessStatusCode();
+            Data = await response.Content.ReadAsStringAsync(HttpContextAccessor.HttpContext!.RequestAborted);
+    }
+}
